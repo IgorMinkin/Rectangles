@@ -1,11 +1,34 @@
 /**
  * Created by Igor on 8/25/14.
  */
-var rectanglesApp = angular.module('rectanglesApp', []);
+var rectanglesApp = angular.module('rectanglesApp', ['LocalStorageModule']);
 
-rectanglesApp.controller('CanvasController', function($scope) {
+rectanglesApp.controller('CanvasController', function($scope, localStorageService) {
     //initialize
-    var canvas = $scope.canvas = new Canvas(800, 400, '#FFE900', 10, 10);
+    var canvas = readFromStore();
+    if(canvas) {
+        $scope.canvas = canvas;
+    } else {
+        $scope.canvas = getDefaultCanvas();
+    }
+
+    //event handlers
+    $scope.save = function() {
+        writeToStore($scope.canvas);
+        toastr.success("Canvas saved..");
+    }
+
+    function readFromStore() {
+        return localStorageService.get('canvas');
+    }
+
+    function writeToStore(canvas) {
+        localStorageService.set('canvas', JSON.stringify(canvas));
+    }
+
+    function getDefaultCanvas() {
+        return new Canvas(800, 400, '#FFE900', 10, 10);
+    }
 
     //debug
     window.scope = $scope;
@@ -16,11 +39,11 @@ rectanglesApp.controller('ToolbarController', function($scope) {
     $scope.newRectangle = {};
 
     $scope.addRectangle = function() {
-        $scope.canvas.addRectangle(
+        $scope.canvas.rectangles.push(
             new Rectangle(
                 $scope.newRectangle.width,
                 $scope.newRectangle.height,
-                $scope.newRectangle.color), 10, 50);
+                $scope.newRectangle.color));
 
         $scope.newRectangle = {};
     };
@@ -37,27 +60,27 @@ rectanglesApp.directive('rectangleCanvas', function() {
             var canvas = $scope.canvas;
             var isInsideCanvas = function(rectangle) {
                 var rectangleHeight = parseInt(rectangle.height),
-                    rectangleWidth = rectangle.left + parseInt(rectangle.width);
+                    rectangleWidth = parseInt(rectangle.width);
 
                 return rectangle.top + rectangleHeight > 0
                         && rectangle.left + rectangleWidth > 0;
             };
 
-            this.rectangleMoved = function(rectangle) {
+            this.onRectangleMoved = function(rectangle) {
                 if(!isInsideCanvas(rectangle)) {
-                    var remaining = _.filter(canvas.rectangles, function(r) {
-                        return r.id !== rectangle.id;
-                    });
+//                    var remaining = _.filter(canvas.rectangles, function(r) {
+//                        return r.id !== rectangle.id;
+//                    });
 
-                    $scope.$apply(function() {
-                        canvas.rectangles = remaining;
-                    });
+//                    $scope.$apply(function() {
+//                        canvas.rectangles = remaining;
+//                    });
                 }
             }
         },
         templateUrl: '/templates/canvas.html'
     }
-})
+});
 
 rectanglesApp.directive('rectangle', function($document) {
     return {
@@ -68,39 +91,29 @@ rectanglesApp.directive('rectangle', function($document) {
         },
         templateUrl: '/templates/rectangle.html',
         link: function(scope, element, attrs, canvasCtrl) {
-            var startX = 0, startY = 0, x = 0, y = 0;
+            var rectangle = scope.rectangle;
+            $(element).draggable({stop: dragStop});
 
-            element.css({
-                position: 'relative',
-                cursor: 'pointer'
-            });
-
-            element.on('mousedown', function(event) {
-                // Prevent default dragging of selected content
-                event.preventDefault();
-                startX = event.pageX - x;
-                startY = event.pageY - y;
-                $document.on('mousemove', mousemove);
-                $document.on('mouseup', mouseup);
-            });
-
-            function mousemove(event) {
-                y = event.pageY - startY;
-                x = event.pageX - startX;
-                element.css({
-                    top: y + 'px',
-                    left:  x + 'px'
-                });
+            function dragStop(e, ui) {
+                rectangle.top = ui.position.top;
+                rectangle.left = ui.position.left;
+                canvasCtrl.onRectangleMoved(rectangle);
             }
+        }
+    };
+});
 
-            function mouseup(e) {
-                console.log(e);
-                $document.off('mousemove', mousemove);
-                $document.off('mouseup', mouseup);
-                scope.rectangle.setPosition(y, x);
-                console.log(scope.rectangle);
-                canvasCtrl.rectangleMoved(scope.rectangle);
+rectanglesApp.directive('stopEvent', function () {
+    return {
+        restrict: 'A',
+        link: function (scope, element, attr) {
+            function stop(e) {
+                e.stopPropagation();
             }
+            element.bind('click', stop);
+            element.bind('mousedown', stop);
+            element.bind('mouseup', stop);
+
         }
     };
 });

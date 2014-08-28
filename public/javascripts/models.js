@@ -2,13 +2,13 @@
  * Created by Igor on 8/25/14.
  */
 
-function Rectangle(width, height, color) {
+function Rectangle(width, height, color, top, left) {
     this.id = uuid.v4();
     this.width = width;
     this.height = height;
     this.color = color;
-    this.top = 0;
-    this.left = 0;
+    this.top = top;
+    this.left = left;
 }
 
 Rectangle.prototype = {
