@@ -71,7 +71,7 @@ rectanglesApp.directive('rectangleCanvas', function() {
 //                    var remaining = _.filter(canvas.rectangles, function(r) {
 //                        return r.id !== rectangle.id;
 //                    });
-
+//
 //                    $scope.$apply(function() {
 //                        canvas.rectangles = remaining;
 //                    });
@@ -92,11 +92,15 @@ rectanglesApp.directive('rectangle', function($document) {
         templateUrl: '/templates/rectangle.html',
         link: function(scope, element, attrs, canvasCtrl) {
             var rectangle = scope.rectangle;
-            $(element).draggable({stop: dragStop});
+            $(element).draggable({stop: dragStop, containment: "parent"});
 
             function dragStop(e, ui) {
+                console.log(ui);
+                console.log(e);
+
                 rectangle.top = ui.position.top;
                 rectangle.left = ui.position.left;
+                console.log(rectangle);
                 canvasCtrl.onRectangleMoved(rectangle);
             }
         }
@@ -108,12 +112,30 @@ rectanglesApp.directive('stopEvent', function () {
         restrict: 'A',
         link: function (scope, element, attr) {
             function stop(e) {
-                e.stopPropagation();
+                e.stopImmediatePropagation();
             }
-            element.bind('click', stop);
+            //element.bind('click', stop);
             element.bind('mousedown', stop);
             element.bind('mouseup', stop);
 
         }
     };
 });
+
+rectanglesApp.directive('specialButton', function() {
+    return {
+        restrict: 'A',
+        scope: {
+            click: '&'
+        },
+        link: function(scope, element) {
+            function stop(e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                scope.click();
+            }
+
+            element.bind('click',stop);
+        }
+    }
+})

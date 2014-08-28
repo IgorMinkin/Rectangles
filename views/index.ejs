@@ -11,7 +11,7 @@
     <p>Welcome to <%= title %></p>
 
     <div class="container" ng-controller="CanvasController">
-        <button ng-click="save()" class="btn btn-danger" stop-event>Save</button>
+        <button click="save()" name="Save" special-button>Save Canvas</button>
         <!-- Start toolbar -->
         <div class="row">
             <div class="col-md-10" id="tools" ng-controller="ToolbarController">
