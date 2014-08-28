@@ -6,3 +6,12 @@ body {
 a {
   color: #00B7FF;
 }
+
+.canvas {
+    padding: 0;
+    margin: 0;
+    width: 800px;
+    height: 400px;
+    background: #c0a16b;
+    margin-top: 10px
+}
